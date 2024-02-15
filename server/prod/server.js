@@ -9,7 +9,7 @@ exports.handler = async (event, context) => {
 
         // Extract the HTTP method and path from the event object
         const { httpMethod, path } = event;
-
+        console.log('Req : ',httpMethod);
         // Handle CORS preflight request
         if (httpMethod === 'OPTIONS') {
             response = {
