@@ -2,6 +2,3 @@
   command = "npm run build"
   publish = "dist/demo/browser"
    functions = "server/prod"
-
-[[plugins]]
-  package = "@netlify/plugin-angular"
