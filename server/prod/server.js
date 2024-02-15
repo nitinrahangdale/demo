@@ -10,6 +10,20 @@ exports.handler = async (event, context) => {
         // Extract the HTTP method and path from the event object
         const { httpMethod, path } = event;
 
+        // Handle CORS preflight request
+        if (httpMethod === 'OPTIONS') {
+            response = {
+                statusCode: 200,
+                headers: {
+                    'Access-Control-Allow-Origin': 'https://codingdev.netlify.app',
+                    'Access-Control-Allow-Methods': 'GET, POST',
+                    'Access-Control-Allow-Headers': 'Content-Type'
+                },
+                body: ''
+            };
+            return response;
+        }
+
         // Handle GET requests to the /get endpoint
         if (httpMethod === 'GET' && path === '/get') {
             response = {
@@ -63,6 +77,13 @@ exports.handler = async (event, context) => {
         else {
             response = { statusCode: 404, body: 'Not Found' };
         }
+
+        // Add CORS headers to the response
+        response.headers = {
+            'Access-Control-Allow-Origin': 'https://codingdev.netlify.app',
+            'Access-Control-Allow-Methods': 'GET, POST',
+            'Access-Control-Allow-Headers': 'Content-Type'
+        };
 
         return response;
     } catch (error) {
