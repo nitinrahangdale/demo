@@ -21,6 +21,8 @@ export class ReportService {
   executeTest(testCase: string) {
     const headers = new HttpHeaders().set('Content-Type', 'application/json');
     const body = { testCase: testCase };
-    return this.http.post<any>(this.baseUrl + '/run', body, { headers: headers });
+    console.log(environment);
+    
+    return this.http.post<any>(this.baseUrl + '/runtest', body, { headers: headers });
   }
 }
