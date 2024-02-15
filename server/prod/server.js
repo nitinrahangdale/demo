@@ -4,15 +4,13 @@ const path = require('path');
 
 exports.handler = async (event, context) => {
     try {
-        // Define a response object
-        let response;
-
         // Extract the HTTP method and path from the event object
         const { httpMethod, path } = event;
-        console.log('Req : ',httpMethod);
+        console.log('Req : ', httpMethod);
+
         // Handle CORS preflight request
         if (httpMethod === 'OPTIONS') {
-            response = {
+            return {
                 statusCode: 200,
                 headers: {
                     'Access-Control-Allow-Origin': 'https://codingdev.netlify.app',
@@ -21,28 +19,40 @@ exports.handler = async (event, context) => {
                 },
                 body: ''
             };
-            return response;
         }
+
+        // Define a response object with CORS headers
+        let response = {
+            headers: {
+                'Access-Control-Allow-Origin': 'https://codingdev.netlify.app',
+                'Access-Control-Allow-Methods': 'GET, POST',
+                'Access-Control-Allow-Headers': 'Content-Type'
+            }
+        };
 
         // Handle GET requests to the /get endpoint
         if (httpMethod === 'GET' && path === '/get') {
-            response = {
-                statusCode: 200,
-                body: 'Hello World!'
-            };
+            response.statusCode = 200;
+            response.body = 'Hello World!';
         }
 
         // Handle GET requests to the /run endpoint
         else if (httpMethod === 'GET' && path === '/run') {
             // Execute the shell command
-            exec('npx playwright test /tmp/generated-test-case.spec.ts', (error, stdout, stderr) => {
-                if (error) {
-                    console.error('Error running test:', error);
-                    response = { statusCode: 500, body: 'Test execution failed.' };
-                    return;
-                }
-                console.log('Execution of shell command is complete!');
-                response = { statusCode: 200, body: 'Execution of shell command is complete!' };
+            await new Promise((resolve, reject) => {
+                exec('npx playwright test /tmp/generated-test-case.spec.ts', (error, stdout, stderr) => {
+                    if (error) {
+                        console.error('Error running test:', error);
+                        response.statusCode = 500;
+                        response.body = 'Test execution failed.';
+                        reject(error);
+                    } else {
+                        console.log('Execution of shell command is complete!');
+                        response.statusCode = 200;
+                        response.body = 'Execution of shell command is complete!';
+                        resolve();
+                    }
+                });
             });
         }
 
@@ -53,38 +63,34 @@ exports.handler = async (event, context) => {
             // Check if testCase is valid
             if (!testCase || typeof testCase !== 'string') {
                 console.error('Invalid test case data:', testCase);
-                return { statusCode: 400, body: 'Invalid test case data.' };
+                response.statusCode = 400;
+                response.body = 'Invalid test case data.';
+            } else {
+                // Save the test case data to a file in the /tmp directory
+                const filePath = path.join('/tmp', 'generated-test-case.spec.ts');
+                await fs.writeFile(filePath, testCase, 'utf8');
+                console.log('Test case written to file successfully.');
+
+                // Execute the test case
+                await new Promise((resolve, reject) => {
+                    exec(`npx playwright test ${filePath}`, (error, stdout, stderr) => {
+                        if (error) {
+                            console.error('Error running test:', error);
+                            response.statusCode = 500;
+                            response.body = 'Test execution failed.';
+                            reject(error);
+                        } else {
+                            console.log('Test execution completed successfully.');
+                            response.statusCode = 200;
+                            response.body = stdout;
+                            resolve();
+                        }
+                    });
+                });
             }
-
-            // Save the test case data to a file in the /tmp directory
-            await fs.writeFile(path.resolve('/tmp/generated-test-case.spec.ts'), testCase, 'utf8');
-
-            console.log('Test case written to file successfully.');
-
-            // Execute the test case
-            exec('npx playwright test /tmp/generated-test-case.spec.ts', (error, stdout, stderr) => {
-                if (error) {
-                    console.error('Error running test:', error);
-                    response = { statusCode: 500, body: 'Test execution failed.' };
-                    return;
-                }
-                console.log('Test execution completed successfully.');
-                response = { statusCode: 200, body: stdout };
-            });
         }
 
-        // Return a 404 for unrecognized routes
-        else {
-            response = { statusCode: 404, body: 'Not Found' };
-        }
-
-        // Add CORS headers to the response
-        response.headers = {
-            'Access-Control-Allow-Origin': 'https://codingdev.netlify.app',
-            'Access-Control-Allow-Methods': 'GET, POST',
-            'Access-Control-Allow-Headers': 'Content-Type'
-        };
-
+        // Return the response
         return response;
     } catch (error) {
         console.error('Error:', error);
