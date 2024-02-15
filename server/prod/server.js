@@ -5,7 +5,7 @@ const shell = require('shelljs');
 exports.handler = async (event, context) => {
     try {
         // Extract the HTTP method and path from the event object
-        const { httpMethod, path } = event;
+        const { httpMethod, rawPath } = event;
 
         // Define response headers for CORS
         const headers = {
@@ -27,7 +27,7 @@ exports.handler = async (event, context) => {
         let response;
 
         // Handle GET requests to the /get endpoint
-        if (httpMethod === 'GET' && path === '/get') {
+        if (httpMethod === 'GET' && rawPath === '/get') {
             response = {
                 statusCode: 200,
                 headers,
@@ -36,7 +36,7 @@ exports.handler = async (event, context) => {
         }
 
         // Handle GET requests to the /run endpoint
-        else if (httpMethod === 'GET' && path === '/run') {
+        else if (httpMethod === 'GET' && rawPath === '/run') {
             // Execute the shell command
             const result = shell.exec('npx playwright test ../tests/generated-test-case.js');
             if (result.code !== 0) {
@@ -57,7 +57,7 @@ exports.handler = async (event, context) => {
         }
 
         // Handle POST requests to the /runtest endpoint
-        else if (httpMethod === 'POST' && path === '/runtest') {
+        else if (httpMethod === 'POST' && rawPath === '/runtest') {
             const { testCase } = JSON.parse(event.body);
 
             // Check if testCase is valid
@@ -95,7 +95,7 @@ exports.handler = async (event, context) => {
         }
 
         // Return the response
-        return response = {
+        return response || {
             statusCode: 404,
             headers,
             body: 'Not Found'
