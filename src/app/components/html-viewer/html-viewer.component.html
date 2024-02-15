@@ -1,0 +1,6 @@
+<!-- <iframe [src]="htmlFilePath" width="100%" height="300px"></iframe> -->
+<button (click)="saveReport()">Save Report</button>
+
+<div *ngIf="reportData">
+    <pre>{{ reportData | json }}</pre>
+  </div>
