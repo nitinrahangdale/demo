@@ -1,12 +1,12 @@
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpHeaders } from '@angular/common/http';
-import { environment } from '../../environments/enviroments';
+import { environment } from '../../environments/enviroment';
 
 @Injectable({
   providedIn: 'root'
 })
 export class ReportService {
-  private baseUrl = environment.baseUrl;
+  private baseUrl = environment.production ? 'https://nitin-playwrightonui--codingdev.netlify.app/.netlify/functions/server/prod' : 'http://localhost:3000';
 
   constructor(private http: HttpClient) { }
 
