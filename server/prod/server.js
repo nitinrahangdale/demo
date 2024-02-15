@@ -4,40 +4,37 @@ const path = require('path');
 
 exports.handler = async (event, context) => {
     try {
-        // Extract the HTTP method and path from the event object
-        const { httpMethod, path } = event;
+        // Extract the HTTP method and request path from the event object
+        const { httpMethod, path: requestPath } = event;
         console.log('Req : ', httpMethod);
+
+        // Define a response object with CORS headers
+        let response = {
+            statusCode: 200,
+            headers: {
+                'Access-Control-Allow-Origin': 'https://codingdev.netlify.app',
+                'Access-Control-Allow-Methods': 'GET, POST',
+                'Access-Control-Allow-Headers': 'Content-Type'
+            },
+            body: ''
+        };
 
         // Handle CORS preflight request
         if (httpMethod === 'OPTIONS') {
             return {
                 statusCode: 200,
-                headers: {
-                    'Access-Control-Allow-Origin': 'https://codingdev.netlify.app',
-                    'Access-Control-Allow-Methods': 'GET, POST',
-                    'Access-Control-Allow-Headers': 'Content-Type'
-                },
+                headers: response.headers,
                 body: ''
             };
         }
 
-        // Define a response object with CORS headers
-        let response = {
-            headers: {
-                'Access-Control-Allow-Origin': 'https://codingdev.netlify.app',
-                'Access-Control-Allow-Methods': 'GET, POST',
-                'Access-Control-Allow-Headers': 'Content-Type'
-            }
-        };
-
         // Handle GET requests to the /get endpoint
-        if (httpMethod === 'GET' && path === '/get') {
-            response.statusCode = 200;
+        if (httpMethod === 'GET' && requestPath === '/get') {
             response.body = 'Hello World!';
         }
 
         // Handle GET requests to the /run endpoint
-        else if (httpMethod === 'GET' && path === '/run') {
+        else if (httpMethod === 'GET' && requestPath === '/run') {
             // Execute the shell command
             await new Promise((resolve, reject) => {
                 exec('npx playwright test /tmp/generated-test-case.spec.ts', (error, stdout, stderr) => {
@@ -45,19 +42,17 @@ exports.handler = async (event, context) => {
                         console.error('Error running test:', error);
                         response.statusCode = 500;
                         response.body = 'Test execution failed.';
-                        reject(error);
                     } else {
                         console.log('Execution of shell command is complete!');
-                        response.statusCode = 200;
                         response.body = 'Execution of shell command is complete!';
-                        resolve();
                     }
+                    resolve();
                 });
             });
         }
 
         // Handle POST requests to the /runtest endpoint
-        else if (httpMethod === 'POST' && path === '/runtest') {
+        else if (httpMethod === 'POST' && requestPath === '/runtest') {
             const { testCase } = JSON.parse(event.body);
 
             // Check if testCase is valid
@@ -78,13 +73,11 @@ exports.handler = async (event, context) => {
                             console.error('Error running test:', error);
                             response.statusCode = 500;
                             response.body = 'Test execution failed.';
-                            reject(error);
                         } else {
                             console.log('Test execution completed successfully.');
-                            response.statusCode = 200;
                             response.body = stdout;
-                            resolve();
                         }
+                        resolve();
                     });
                 });
             }
