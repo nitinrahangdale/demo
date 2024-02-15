@@ -1,70 +1,72 @@
-const express = require('express');
-const bodyParser = require('body-parser');
-const path = require('path');
-const shell = require('shelljs');
+const { exec } = require('child_process');
 const fs = require('fs').promises;
-const { test, expect } = require('@playwright/test');
-const PORT = 3000;
+const path = require('path');
 
-const app = express();
-const cors = require('cors');
-// Use CORS middleware
-app.use(cors());
-
-// Middleware to parse JSON bodies
-app.use(express.json());
-
-app.use(bodyParser.json());
-
-app.get('/get', (req, res) => {
-    res.send('Hello World!');
-});
-
-app.get('/run', (req, res) => {
-    const file = path.resolve('../tests/example.spec.ts');
-    shell.cd('../tests');
-    shell.exec('npx playwright test generated-test-case.js');
-    res.send('Execution of shell command is complete!');
-});
-
-// Endpoint to receive and execute the test case
-app.post('/runtest', async (req, res) => {
+exports.handler = async (event, context) => {
     try {
-        // Get the test case data from the request body
-        const { testCase } = req.body;
+        // Define a response object
+        let response;
 
-        // Check if testCase is valid
-        if (!testCase || typeof testCase !== 'string') {
-            console.error('Invalid test case data:', testCase);
-            return res.status(400).send('Invalid test case data.');
+        // Extract the HTTP method and path from the event object
+        const { httpMethod, path } = event;
+
+        // Handle GET requests to the /get endpoint
+        if (httpMethod === 'GET' && path === '/get') {
+            response = {
+                statusCode: 200,
+                body: 'Hello World!'
+            };
         }
 
-        // Save the test case data to a file
-        await fs.writeFile('generated-test-case.spec.ts', testCase, 'utf8');
-
-        console.log('Test case written to file successfully.');
-        // Execute the test case
-        const result = shell.exec('npx playwright test');
-
-        // Capture the output of the test case execution
-        const output = result.stdout;
-        console.log(output);
-
-        if (result.code === 0) {
-            console.log('Test execution completed successfully.');
-            res.status(200).send(JSON.stringify(output)); // Update this line
-        } else {
-            console.error('Error running test:', result.stderr);
-            res.status(500).send('Test execution failed.');
+        // Handle GET requests to the /run endpoint
+        else if (httpMethod === 'GET' && path === '/run') {
+            // Execute the shell command
+            exec('npx playwright test /tmp/generated-test-case.spec.ts', (error, stdout, stderr) => {
+                if (error) {
+                    console.error('Error running test:', error);
+                    response = { statusCode: 500, body: 'Test execution failed.' };
+                    return;
+                }
+                console.log('Execution of shell command is complete!');
+                response = { statusCode: 200, body: 'Execution of shell command is complete!' };
+            });
         }
 
+        // Handle POST requests to the /runtest endpoint
+        else if (httpMethod === 'POST' && path === '/runtest') {
+            const { testCase } = JSON.parse(event.body);
+
+            // Check if testCase is valid
+            if (!testCase || typeof testCase !== 'string') {
+                console.error('Invalid test case data:', testCase);
+                return { statusCode: 400, body: 'Invalid test case data.' };
+            }
+
+            // Save the test case data to a file in the /tmp directory
+            await fs.writeFile(path.resolve('/tmp/generated-test-case.spec.ts'), testCase, 'utf8');
+
+            console.log('Test case written to file successfully.');
+
+            // Execute the test case
+            exec('npx playwright test /tmp/generated-test-case.spec.ts', (error, stdout, stderr) => {
+                if (error) {
+                    console.error('Error running test:', error);
+                    response = { statusCode: 500, body: 'Test execution failed.' };
+                    return;
+                }
+                console.log('Test execution completed successfully.');
+                response = { statusCode: 200, body: stdout };
+            });
+        }
+
+        // Return a 404 for unrecognized routes
+        else {
+            response = { statusCode: 404, body: 'Not Found' };
+        }
+
+        return response;
     } catch (error) {
-        console.error('Error running test:', error);
-        res.status(500).send('Test execution failed.');
+        console.error('Error:', error);
+        return { statusCode: 500, body: 'Internal Server Error' };
     }
-});
-
-app.listen(PORT, function (err) {
-    if (err) console.log("Error in server setup")
-    console.log("Server listening on Port", PORT);
-})
+};
