@@ -6,7 +6,7 @@ import { environment } from '../../environments/environment.prod';
   providedIn: 'root'
 })
 export class ReportService {
-  private baseUrl = environment.production ? 'https://nitin-playwrightonui--codingdev.netlify.app/.netlify/functions/server/prod' : 'http://localhost:3000';
+  private baseUrl = environment.production ? 'https://codingdev.netlify.app/.netlify/functions/server' : 'http://localhost:3000';
 
   constructor(private http: HttpClient) { }
 
