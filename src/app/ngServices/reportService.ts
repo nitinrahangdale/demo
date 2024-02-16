@@ -6,7 +6,8 @@ import { environment } from '../../environments/environment.prod';
   providedIn: 'root'
 })
 export class ReportService {
-  private baseUrl = 'https://playwright-api-rx3v.onrender.com';
+  //private baseUrl = 'https://playwright-api-rx3v.onrender.com';
+  private baseUrl = 'https://relaxed-kataifi-3d8e14.netlify.app/.netlify/functions/executeScript';
 
   constructor(private http: HttpClient) { }
 
