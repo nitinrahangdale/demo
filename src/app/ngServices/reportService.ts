@@ -6,7 +6,7 @@ import { environment } from '../../environments/environment.prod';
   providedIn: 'root'
 })
 export class ReportService {
-  private baseUrl = environment.production ? 'https://codingdev.netlify.app/.netlify/functions/server' : 'http://localhost:3000';
+  private baseUrl = 'https://playwright-api-rx3v.onrender.com';
 
   constructor(private http: HttpClient) { }
 
