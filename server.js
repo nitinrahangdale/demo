@@ -3,7 +3,7 @@ const bodyParser = require('body-parser');
 const path = require('path');
 const shell = require('shelljs');
 const fs = require('fs').promises;
-const { test, expect } = require('@playwright/test');
+const { test, expect, chromium } = require('@playwright/test');
 const PORT = 3000;
 
 const app = express();
