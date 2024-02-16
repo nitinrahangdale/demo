@@ -1,0 +1,60 @@
+<!-- <button mat-button (click)="toggleHtml()"> Load Report</button>
+<div *ngIf="showHtml">
+    <app-html-viewer></app-html-viewer>
+</div> -->
+
+
+<div class="menu">
+    <div>
+        <label for="pageUrl">Page URL:</label>
+        <input type="text" id="pageUrl" [(ngModel)]="pageUrl" />
+    </div>
+
+    <div>
+        <label for="locatorToSearch">Locator to search:</label>
+        <input type="text" id="locatorToSearch" [(ngModel)]="locatorToSearch" />
+    </div>
+
+    <div>
+        <label for="locator">Locator Name:</label>
+        <select id="locator" [(ngModel)]="locatorType">
+            <option value="getByRole">getByRole</option>
+            <option value="getByText">getByText</option>
+            <!-- Add more options as needed -->
+        </select>
+
+        <div *ngIf="locatorType === 'getByRole'">
+            <label for="locatorSubType">Locator sub-type:</label>
+            <select id="roleSelector" [(ngModel)]="locatorSubType">
+                <option *ngFor="let role of ariaRoles" [value]="role">{{ role }}</option>
+            </select>
+        </div>
+    </div>
+
+    <div>
+        <label for="action">Action:</label>
+        <select id="action" [(ngModel)]="action">
+            <option value="click">click</option>
+            <!-- Add more options as needed -->
+        </select>
+    </div>
+
+    <button (click)="generateTestCase()">Generate Test Case</button>
+</div>
+
+<div *ngIf="generatedTestCase">
+    <h3>Generated Test Case:</h3>
+    <pre>{{ generatedTestCase }}</pre>
+
+    <div>
+        Would you like to run this test case? 
+        <button (click)="runTests(generatedTestCase)">Yes</button>
+        <button>NO</button>
+    </div>
+
+    <div *ngIf="testCaseRunning"> Test cases running...</div>
+
+    <div  *ngIf="!testCaseRunning && testCaseResult">
+        <pre>{{ testCaseResult }}</pre>
+    </div>
+</div>
