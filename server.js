@@ -4,7 +4,7 @@ const path = require('path');
 const shell = require('shelljs');
 const fs = require('fs').promises;
 const { test, expect, chromium } = require('@playwright/test');
-const PORT = 3000;
+const PORT =  process.env.PORT || 3000;
 
 const app = express();
 const cors = require('cors');
